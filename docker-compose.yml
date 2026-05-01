@@ -1,0 +1,43 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: scale-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    container_name: scale-backend
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      DB_NAME: scale
+      CORS_ORIGINS: ${PUBLIC_APP_URL:-http://localhost:8080}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:8080}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    container_name: scale-frontend
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_BACKEND_URL: ""
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+volumes:
+  mongo_data:
