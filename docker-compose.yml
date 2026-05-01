@@ -13,6 +13,7 @@ services:
 
   backend:
     container_name: scale-backend
+    image: scale-backend:latest
     build:
       context: ./backend
     restart: unless-stopped
@@ -29,6 +30,7 @@ services:
 
   frontend:
     container_name: scale-frontend
+    image: scale-frontend:latest
     build:
       context: ./frontend
       args:
