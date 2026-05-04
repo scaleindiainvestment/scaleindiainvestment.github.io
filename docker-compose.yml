@@ -4,7 +4,7 @@ services:
     container_name: scale-mongo
     restart: unless-stopped
     volumes:
-      - mongo_data:/data/db
+      - /DATA/AppData/scale/mongo-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -13,24 +13,27 @@ services:
 
   backend:
     container_name: scale-backend
-    image: scale-backend:latest
     build:
       context: ./backend
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
     environment:
       MONGO_URL: mongodb://mongo:27017
       DB_NAME: scale
-      CORS_ORIGINS: ${PUBLIC_APP_URL:-http://localhost:8080}
-      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:8080}
+      JWT_SECRET: REPLACE_WITH_A_LONG_RANDOM_SECRET
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: REPLACE_WITH_A_STRONG_ADMIN_PASSWORD
+      CORS_ORIGINS: http://192.168.1.50:8080
+      PUBLIC_APP_URL: http://192.168.1.50:8080
+      ADMIN_EMAIL: you@example.com
+      BREVO_API_KEY: REPLACE_WITH_BREVO_API_KEY
+      SENDER_EMAIL: you@example.com
+      REPLY_TO_EMAIL: you@example.com
     depends_on:
       mongo:
         condition: service_healthy
 
   frontend:
     container_name: scale-frontend
-    image: scale-frontend:latest
     build:
       context: ./frontend
       args:
@@ -39,7 +42,4 @@ services:
     depends_on:
       - backend
     ports:
-      - "${APP_PORT:-8080}:80"
-
-volumes:
-  mongo_data:
+      - "8080:80"

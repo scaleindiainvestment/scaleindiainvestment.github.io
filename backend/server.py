@@ -181,15 +181,25 @@ async def _seed_fake_users():
 
 
 async def _seed_admin():
-    """Seed the admin account on first boot if missing."""
+    """Seed the admin account and keep its env-configured credentials in sync."""
     lc = ADMIN_USERNAME.lower()
     existing = await users_col.find_one({"username_lc": lc})
     if existing:
-        # ensure isAdmin + approved (idempotent)
+        # Keep the admin record aligned with env so self-hosted deployments can
+        # rotate credentials without manually editing MongoDB.
         await users_col.update_one(
             {"username_lc": lc},
-            {"$set": {"isAdmin": True, "status": "approved"}},
+            {"$set": {
+                "username": ADMIN_USERNAME,
+                "username_lc": lc,
+                "passwordHash": hash_password(ADMIN_PASSWORD),
+                "email": existing.get("email") or "admin@scale.local",
+                "isAdmin": True,
+                "status": "approved",
+                "approvedUntil": None,
+            }},
         )
+        logger.info("Synced admin user '%s' from environment", ADMIN_USERNAME)
         return
     user_id = str(uuid.uuid4())
     now_iso = datetime.now(timezone.utc).isoformat()

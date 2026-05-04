@@ -84,6 +84,7 @@ On first backend start, the app seeds an admin account using:
 - `ADMIN_PASSWORD`
 
 Use that account to log in and approve new users.
+If you change those admin env values later, restarting the backend will sync the stored admin credentials to match.
 
 ## Docker self-hosting
 
